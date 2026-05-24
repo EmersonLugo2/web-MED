@@ -1,0 +1,1368 @@
+cat > /mnt/user-data/outputs/webmd_prototype_v2.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebMD Health — Prototipo Navegable v2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#C01F2F;--red-h:#A01828;--red-light:#FFF0F1;--red-border:#FFBDC2;
+  --navy:#1A1F2E;--navy-mid:#2D3347;
+  --text-muted:#6B7A99;--text-sec:#5A6378;
+  --border:#E8EAF0;--bg:#F7F8FA;--white:#fff;
+  --green:#16A34A;--amber:#F59E0B;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--navy);font-size:14px;line-height:1.5;min-height:100vh;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── NAV ── */
+.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;flex-shrink:0;}
+.logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--red);cursor:pointer;text-decoration:none;}
+.logo span{color:var(--navy);}
+.logo-badge{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;color:var(--red);background:var(--red-light);padding:2px 8px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{text-decoration:none;font-size:13px;font-weight:500;color:var(--text-sec);cursor:pointer;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--red);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.btn-ghost{border:none;background:transparent;font-size:13px;font-weight:500;color:var(--text-sec);cursor:pointer;padding:7px 14px;border-radius:var(--r-sm);font-family:inherit;transition:background .15s;}
+.btn-ghost:hover{background:var(--bg);}
+.btn-outline{border:1.5px solid var(--red);color:var(--red);background:transparent;padding:7px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn-outline:hover{background:var(--red-light);}
+.btn-solid{background:var(--red);color:#fff;border:none;padding:8px 20px;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;}
+.btn-solid:hover{background:var(--red-h);}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);padding:56px 40px;}
+.hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(192,31,47,.2);color:#FF9AA2;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;margin-bottom:18px;}
+.hero h1{font-family:'DM Serif Display',serif;font-size:40px;color:#fff;line-height:1.15;margin-bottom:16px;}
+.hero h1 em{color:#FF6B6B;font-style:italic;}
+.hero p{color:#A8B3CC;font-size:15px;line-height:1.65;margin-bottom:28px;}
+.search-box{background:#fff;border-radius:var(--r-md);padding:6px 6px 6px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.25);margin-bottom:16px;}
+.search-box i{font-size:20px;color:#A8B3CC;}
+.search-box input{border:none;outline:none;font-size:14px;flex:1;font-family:'DM Sans',sans-serif;color:var(--navy);background:transparent;padding:6px 0;}
+.search-box input::placeholder{color:#B0B8CC;}
+.search-btn{background:var(--red);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.search-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.stag{background:rgba(255,255,255,.08);color:#C8D0E0;border:1px solid rgba(255,255,255,.14);padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;}
+.stag:hover{background:rgba(255,255,255,.15);}
+
+/* ── VITALS CARD ── */
+.vitals-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-lg);padding:24px;}
+.vitals-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.vtitle{font-size:11px;font-weight:600;color:#A8B3CC;text-transform:uppercase;letter-spacing:1px;}
+.vdate{font-size:11px;color:#6B7A99;}
+.vital-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.07);}
+.vital-row:last-of-type{border-bottom:none;}
+.vl{display:flex;align-items:center;gap:10px;font-size:13px;color:#C8D0E0;}
+.vdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.vr{display:flex;align-items:baseline;gap:4px;}
+.vval{font-size:16px;font-weight:600;color:#fff;}
+.vunit{font-size:11px;color:#6B7A99;}
+.sbadge{font-size:11px;font-weight:500;padding:2px 9px;border-radius:10px;margin-left:4px;}
+.sok{background:#1B3A2A;color:#4ADE80;} .swarn{background:#3A2A1B;color:#FBB040;}
+.vbtn{width:100%;margin-top:18px;padding:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#C8D0E0;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;}
+.vbtn:hover{background:rgba(255,255,255,.08);}
+
+/* ── CONTAINER ── */
+.container{max-width:1100px;margin:0 auto;padding:0 40px;}
+
+/* ── ALERT BANNER ── */
+.alert-banner{background:#FFF8E1;border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:12px 18px;display:flex;align-items:center;gap:12px;font-size:13px;color:#92400E;margin:24px 0 0;}
+.alert-banner i{font-size:18px;color:#D97706;flex-shrink:0;}
+.alert-banner a{color:#D97706;font-weight:500;text-decoration:none;}
+
+/* ── SECTION ── */
+.section{padding:36px 0;}
+.section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.stitle{font-size:18px;font-weight:600;color:var(--navy);}
+.see-all{font-size:13px;color:var(--red);font-weight:500;text-decoration:none;cursor:pointer;}
+
+/* ── QUICK ACTIONS ── */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.qa-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 16px;text-align:center;cursor:pointer;transition:all .15s;}
+.qa-card:hover{border-color:var(--red);background:var(--red-light);}
+.qa-icon{font-size:28px;margin-bottom:10px;}
+.qa-label{font-size:13px;font-weight:600;color:var(--navy);}
+.qa-desc{font-size:11px;color:var(--text-muted);margin-top:4px;}
+
+/* ── DASHBOARD SECTIONS GRID ── */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.dash-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:22px 20px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:10px;}
+.dash-card:hover{border-color:var(--red);transform:translateY(-2px);}
+.dash-card-icon{width:44px;height:44px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.dash-card-title{font-size:15px;font-weight:600;color:var(--navy);}
+.dash-card-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+.dash-card-arrow{font-size:13px;color:var(--red);font-weight:500;margin-top:auto;}
+
+/* ── ARTICLES ── */
+.articles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.article-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .15s;}
+.article-card:hover{border-color:var(--red);transform:translateY(-2px);}
+.article-img{height:100px;display:flex;align-items:center;justify-content:center;font-size:36px;}
+.article-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.hero-media{border-radius:var(--r-lg);overflow:hidden;margin-bottom:20px;}
+.custom-img{width:100%;height:auto;display:block;object-fit:cover;}
+.icon-img{width:28px;height:28px;object-fit:contain;display:block;}
+.article-body{padding:14px 16px;}
+.article-cat{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.article-title{font-size:13px;font-weight:600;color:var(--navy);line-height:1.45;margin-bottom:7px;}
+.article-meta{font-size:11px;color:#A8B3CC;display:flex;align-items:center;gap:5px;}
+
+/* ── DOCTORS ── */
+.doctors-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.doc-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;display:flex;gap:14px;cursor:pointer;transition:border-color .15s;}
+.doc-card:hover{border-color:var(--red);}
+.doc-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0;}
+.doc-name{font-size:14px;font-weight:600;margin-bottom:3px;}
+.doc-spec{font-size:12px;color:var(--text-muted);margin-bottom:7px;}
+.doc-rating{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-sec);}
+.stars{color:#F59E0B;font-size:13px;letter-spacing:-1px;}
+.doc-avail{font-size:11px;font-weight:500;margin-top:5px;display:flex;align-items:center;gap:4px;}
+.adot{width:7px;height:7px;border-radius:50%;}
+
+/* ── SYMPTOM CHECKER ── */
+.symptom-checker{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;}
+.sc-hdr{display:flex;align-items:flex-start;gap:18px;margin-bottom:24px;}
+.sc-icon{width:52px;height:52px;background:var(--red-light);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.sc-title{font-size:17px;font-weight:600;margin-bottom:4px;}
+.sc-sub{font-size:13px;color:var(--text-muted);}
+.body-zones{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.zone-btn{border:1.5px solid var(--border);background:var(--bg);color:var(--text-sec);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.zone-btn.active{background:var(--red);color:#fff;border-color:var(--red);}
+.symptoms-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+.schip{border:1.5px solid var(--border);background:var(--bg);color:var(--text-sec);padding:7px 16px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.schip.selected{background:var(--red-light);color:var(--red);border-color:var(--red-border);}
+.sc-cta{width:100%;background:var(--red);color:#fff;border:none;padding:13px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
+.sc-cta:hover{background:var(--red-h);}
+
+/* ── AUTH SCREENS ── */
+.auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;background:var(--bg);}
+.auth-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-xl);padding:44px 48px;width:100%;max-width:480px;box-shadow:0 4px 40px rgba(0,0,0,.07);}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:26px;color:var(--red);text-align:center;margin-bottom:8px;}
+.auth-logo span{color:var(--navy);}
+.auth-title{font-size:22px;font-weight:600;text-align:center;margin-bottom:6px;}
+.auth-sub{font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:32px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:13px;font-weight:500;color:var(--navy);margin-bottom:6px;}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none;transition:border-color .15s;background:#fff;}
+.form-input:focus{border-color:var(--red);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-btn{width:100%;background:var(--red);color:#fff;border:none;padding:13px;border-radius:var(--r-sm);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;transition:background .15s;}
+.form-btn:hover{background:var(--red-h);}
+.auth-divider{text-align:center;font-size:13px;color:var(--text-muted);margin:20px 0;}
+.auth-link{color:var(--red);font-weight:500;cursor:pointer;text-decoration:none;}
+.auth-link:hover{text-decoration:underline;}
+.forgot-link{font-size:12px;color:var(--text-muted);cursor:pointer;float:right;margin-top:-2px;}
+.forgot-link:hover{color:var(--red);}
+.social-btn{width:100%;border:1.5px solid var(--border);background:#fff;color:var(--navy);padding:11px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color .15s;}
+.social-btn:hover{border-color:#A8B3CC;}
+.form-select{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none;transition:border-color .15s;background:#fff;appearance:none;-webkit-appearance:none;}
+.form-select:focus{border-color:var(--red);}
+.steps-bar{display:flex;gap:6px;margin-bottom:28px;}
+.step-seg{flex:1;height:4px;border-radius:2px;}
+.step-active{background:var(--red);}
+.step-done{background:var(--red);opacity:.4;}
+.step-pending{background:var(--border);}
+.form-check{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-sec);}
+.form-check input{margin-top:2px;accent-color:var(--red);}
+.success-icon{width:64px;height:64px;background:var(--red-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;}
+
+/* ── CONTENT PAGES ── */
+.page-hero{background:var(--navy);padding:40px;color:#fff;}
+.page-hero-inner{max-width:1100px;margin:0 auto;}
+.page-hero h2{font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:8px;}
+.page-hero p{color:#A8B3CC;font-size:14px;}
+.page-content{max-width:1100px;margin:0 auto;padding:36px 40px;}
+
+/* ── AZ ── */
+.az-letters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;}
+.az-letter{width:40px;height:40px;border:1.5px solid var(--border);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;cursor:pointer;transition:all .15s;}
+.az-letter:hover,.az-letter.active{background:var(--red);color:#fff;border-color:var(--red);}
+.az-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.az-item{background:#fff;border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:border-color .15s;}
+.az-item:hover{border-color:var(--red);}
+.az-item-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+.az-item-cat{font-size:11px;color:var(--text-muted);}
+
+/* ── INSURANCE ── */
+.ins-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.ins-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;cursor:pointer;transition:all .15s;}
+.ins-card:hover{border-color:var(--red);transform:translateY(-2px);}
+.ins-icon{font-size:32px;margin-bottom:12px;}
+.ins-name{font-size:15px;font-weight:600;margin-bottom:4px;}
+.ins-desc{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:12px;}
+.ins-tag{display:inline-block;background:var(--red-light);color:var(--red);font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;}
+
+/* ── RESOURCES ── */
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.res-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;cursor:pointer;transition:all .15s;text-align:center;}
+.res-card:hover{border-color:var(--red);transform:translateY(-2px);}
+.res-icon{width:60px;height:60px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;}
+.res-title{font-size:15px;font-weight:600;margin-bottom:6px;}
+.res-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+
+/* ── AMBULANCE ── */
+.amb-alert{background:#C01F2F;color:#fff;border-radius:var(--r-lg);padding:28px;margin-bottom:24px;display:flex;align-items:center;gap:20px;}
+.amb-icon{font-size:48px;}
+.amb-title{font-size:22px;font-weight:700;margin-bottom:6px;}
+.amb-sub{font-size:14px;opacity:.85;}
+.amb-num{font-size:32px;font-weight:700;margin-top:8px;letter-spacing:1px;}
+.amb-btn{background:#fff;color:var(--red);border:none;padding:12px 28px;border-radius:var(--r-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto;white-space:nowrap;}
+.amb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.amb-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;cursor:pointer;}
+.amb-card:hover{border-color:var(--red);}
+.amb-card-title{font-size:14px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.amb-card-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+
+/* ── NEWS ── */
+.news-grid{display:grid;grid-template-columns:2fr 1fr;gap:24px;}
+.news-main{display:flex;flex-direction:column;gap:16px;}
+.news-featured{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.news-featured:hover{border-color:var(--red);}
+.news-feat-img{height:200px;display:flex;align-items:center;justify-content:center;font-size:64px;}
+.news-feat-body{padding:20px 22px;}
+.news-feat-tag{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.news-feat-title{font-size:20px;font-weight:600;line-height:1.35;margin-bottom:10px;}
+.news-feat-excerpt{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;}
+.news-feat-meta{font-size:12px;color:#A8B3CC;display:flex;align-items:center;gap:8px;}
+.news-list{display:flex;flex-direction:column;gap:12px;}
+.news-item{background:#fff;border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;display:flex;gap:14px;align-items:flex-start;transition:border-color .15s;}
+.news-item:hover{border-color:var(--red);}
+.news-item-emoji{font-size:28px;flex-shrink:0;}
+.news-item-cat{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:3px;}
+.news-item-title{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:4px;}
+.news-item-meta{font-size:11px;color:#A8B3CC;}
+.news-sidebar{display:flex;flex-direction:column;gap:14px;}
+.news-sidebar-hdr{font-size:14px;font-weight:600;margin-bottom:4px;}
+.trending-item{background:#fff;border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:border-color .15s;}
+.trending-item:hover{border-color:var(--red);}
+.trending-num{font-size:24px;font-weight:700;color:var(--red-border);margin-bottom:4px;}
+.trending-title{font-size:13px;font-weight:600;line-height:1.4;}
+.trending-cat{font-size:11px;color:var(--text-muted);margin-top:3px;}
+
+/* ── COMMENTS ── */
+.comment-form{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:24px;}
+.comment-form-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+.form-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);outline:none;resize:vertical;min-height:90px;transition:border-color .15s;}
+.form-textarea:focus{border-color:var(--red);}
+.star-rating{display:flex;gap:4px;margin-bottom:16px;}
+.star{font-size:24px;cursor:pointer;color:#E8EAF0;transition:color .1s;}
+.star.filled{color:#F59E0B;}
+.comments-list{display:flex;flex-direction:column;gap:14px;}
+.comment-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;}
+.comment-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.comment-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;}
+.comment-name{font-size:14px;font-weight:600;}
+.comment-date{font-size:12px;color:var(--text-muted);}
+.comment-stars{font-size:13px;color:#F59E0B;letter-spacing:-1px;}
+.comment-text{font-size:13px;color:var(--text-sec);line-height:1.65;}
+.comment-actions{display:flex;gap:16px;margin-top:12px;}
+.comment-action{font-size:12px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:5px;border:none;background:transparent;font-family:inherit;transition:color .15s;}
+.comment-action:hover{color:var(--red);}
+.comment-tag{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);color:var(--text-muted);padding:3px 10px;border-radius:10px;font-size:11px;font-weight:500;margin-right:6px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.comment-tag:hover{border-color:var(--red);color:var(--red);}
+.comment-tag.active{background:var(--red-light);border-color:var(--red-border);color:var(--red);}
+
+/* ── DOCTOR FINDER ── */
+.finder-filters{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:24px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;}
+.finder-results{display:flex;flex-direction:column;gap:14px;}
+.finder-doc{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;display:flex;gap:18px;align-items:flex-start;cursor:pointer;transition:border-color .15s;}
+.finder-doc:hover{border-color:var(--red);}
+.finder-av{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex-shrink:0;}
+.finder-name{font-size:16px;font-weight:600;margin-bottom:3px;}
+.finder-spec{font-size:13px;color:var(--text-muted);margin-bottom:8px;}
+.finder-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.ftag{background:var(--bg);border:1px solid var(--border);color:var(--text-sec);padding:3px 10px;border-radius:10px;font-size:11px;}
+.finder-meta{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text-muted);}
+.finder-btn{margin-left:auto;flex-shrink:0;}
+
+/* ── BMI CALC ── */
+.calc-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;max-width:520px;}
+.calc-result{text-align:center;padding:24px;background:var(--bg);border-radius:var(--r-md);margin-top:20px;}
+.calc-bmi{font-size:48px;font-weight:700;color:var(--red);}
+.calc-cat{font-size:16px;font-weight:500;margin-top:6px;}
+.calc-bar{height:10px;border-radius:5px;background:linear-gradient(to right,#60A5FA,#4ADE80,#FBB040,#F87171);margin:16px 0;position:relative;}
+.calc-indicator{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--navy);transform:translateX(-50%);transition:left .4s;}
+.range-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);}
+
+/* ── RECOVER PWD ── */
+.recover-steps{display:flex;flex-direction:column;gap:0;}
+
+/* ── FOOTER ── */
+.footer{background:var(--navy);color:#A8B3CC;padding:40px;flex-shrink:0;}
+.footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;}
+.footer-logo{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:12px;}
+.footer-logo span{color:#A8B3CC;}
+.footer p{line-height:1.7;font-size:13px;}
+.footer h4{font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;}
+.footer ul{list-style:none;}
+.footer ul li{margin-bottom:9px;}
+.footer ul li a{color:#A8B3CC;text-decoration:none;font-size:13px;cursor:pointer;}
+.footer ul li a:hover{color:#fff;}
+.footer-bottom{max-width:1100px;margin:28px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;font-size:12px;color:#6B7A99;}
+
+/* ── PAGE HEADER ── */
+.breadcrumb{font-size:12px;color:#A8B3CC;display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.breadcrumb span{color:rgba(255,255,255,.5);}
+.breadcrumb a{color:#A8B3CC;cursor:pointer;}
+.breadcrumb a:hover{color:#fff;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: HOME
+══════════════════════════════════════════════ -->
+<div id="s-home" class="screen active">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('s-az')">Salud A-Z</a></li>
+      <li><a onclick="go('s-symptom')">Síntomas</a></li>
+      <li><a onclick="go('s-resources')">Recursos</a></li>
+      <li><a onclick="go('s-news')">Noticias</a></li>
+      <li><a onclick="go('s-insurance')">Seguros</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="btn-outline" onclick="go('s-login')">Iniciar sesión</button>
+      <button class="btn-solid" onclick="go('s-register')">Registro</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge"><i class="ti ti-shield-check" style="font-size:14px;"></i> Verificado por médicos certificados</div>
+        <h1>Tu salud,<br>mejor <em>entendida.</em></h1>
+        <p>Síntomas, diagnósticos y guías de tratamiento con información médica confiable y revisada por especialistas.</p>
+        <div class="search-box">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Busca síntomas, condiciones o medicamentos…" />
+          <button class="search-btn">Buscar</button>
+        </div>
+        <div class="search-tags">
+          <span class="stag">Diabetes</span><span class="stag">Hipertensión</span>
+          <span class="stag">Ansiedad</span><span class="stag">Migraña</span>
+          <span class="stag">COVID-19</span><span class="stag">Colesterol</span>
+        </div>
+      </div>
+      <div class="hero-media">
+        <!-- Cambia esta ruta por el nombre de tu imagen preferida -->
+        <img src="images/hero-photo.jpg" alt="Foto destacada de salud" class="custom-img" />
+      </div>
+      <div class="vitals-card">
+        <div class="vitals-hdr"><span class="vtitle">Mis signos vitales</span><span class="vdate">Hoy, 9:41 AM</span></div>
+        <div class="vital-row">
+          <div class="vl"><span class="vdot" style="background:#4ADE80;"></span>Presión arterial</div>
+          <div class="vr"><span class="vval">118/76</span><span class="vunit">mmHg</span><span class="sbadge sok">Normal</span></div>
+        </div>
+        <div class="vital-row">
+          <div class="vl"><span class="vdot" style="background:#FBB040;"></span>Glucosa</div>
+          <div class="vr"><span class="vval">108</span><span class="vunit">mg/dL</span><span class="sbadge swarn">Revisar</span></div>
+        </div>
+        <div class="vital-row">
+          <div class="vl"><span class="vdot" style="background:#4ADE80;"></span>Frecuencia cardiaca</div>
+          <div class="vr"><span class="vval">72</span><span class="vunit">bpm</span><span class="sbadge sok">Normal</span></div>
+        </div>
+        <div class="vital-row">
+          <div class="vl"><span class="vdot" style="background:#4ADE80;"></span>Saturación O₂</div>
+          <div class="vr"><span class="vval">98</span><span class="vunit">%</span><span class="sbadge sok">Normal</span></div>
+        </div>
+        <button class="vbtn" onclick="go('s-login')">Ver historial completo →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coloca tus imágenes dentro de la carpeta "images" y renómbralas aquí en los src. -->
+  <div class="container">
+    <div class="alert-banner">
+      <i class="ti ti-pill"></i>
+      <span><strong>Recordatorio:</strong> Tu próxima dosis de Metformina 500mg es hoy a las 8:00 PM · <a onclick="go('s-login')">Iniciar sesión para ver plan</a></span>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><span class="stitle">Accesos rápidos</span></div>
+      <div class="qa-grid">
+        <div class="qa-card" onclick="go('s-symptom')"><div class="qa-icon"><img class="icon-img" src="images/icon-symptoms.svg" alt="Síntomas" /></div><div class="qa-label">Verificar síntomas</div><div class="qa-desc">Chequeo guiado</div></div>
+        <div class="qa-card" onclick="go('s-finder')"><div class="qa-icon"><img class="icon-img" src="images/icon-search.svg" alt="Buscar médico" /></div><div class="qa-label">Buscar médico</div><div class="qa-desc">Por ubicación</div></div>
+        <div class="qa-card" onclick="go('s-ambulance')"><div class="qa-icon"><img class="icon-img" src="images/icon-ambulance.svg" alt="Ambulancia" /></div><div class="qa-label">Ambulancia</div><div class="qa-desc">Emergencias</div></div>
+        <div class="qa-card" onclick="go('s-bmi')"><div class="qa-icon"><img class="icon-img" src="images/icon-scale.svg" alt="Calcular IMC" /></div><div class="qa-label">Calcular IMC</div><div class="qa-desc">Calculadora</div></div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:0;">
+      <div class="section-hdr"><span class="stitle">Tu panel de salud</span><a class="see-all" onclick="go('s-login')">Ver todo →</a></div>
+      <div class="dash-grid">
+        <div class="dash-card" onclick="go('s-az')">
+          <div class="dash-card-icon" style="background:#FFF0F1;"><img class="icon-img" src="images/icon-az.svg" alt="A-Z" /></div>
+          <div class="dash-card-title">Salud de la A a la Z</div>
+          <div class="dash-card-desc">Explora condiciones médicas, síntomas y tratamientos ordenados alfabéticamente.</div>
+          <div class="dash-card-arrow">Explorar →</div>
+        </div>
+        <div class="dash-card" onclick="go('s-insurance')">
+          <div class="dash-card-icon" style="background:#EFF6FF;"><img class="icon-img" src="images/icon-insurance.svg" alt="Seguros" /></div>
+          <div class="dash-card-title">Planes de seguro</div>
+          <div class="dash-card-desc">Compara coberturas de EPS, medicina prepagada y planes complementarios.</div>
+          <div class="dash-card-arrow">Ver planes →</div>
+        </div>
+        <div class="dash-card" onclick="go('s-resources')">
+          <div class="dash-card-icon" style="background:#F0FFF4;"><img class="icon-img" src="images/icon-resources.svg" alt="Recursos" /></div>
+          <div class="dash-card-title">Recursos de salud</div>
+          <div class="dash-card-desc">Ambulancia, calculadora de salud y búsqueda de médicos por ubicación.</div>
+          <div class="dash-card-arrow">Acceder →</div>
+        </div>
+        <div class="dash-card" onclick="go('s-news')">
+          <div class="dash-card-icon" style="background:#FFF8E1;"><img class="icon-img" src="images/icon-news.svg" alt="Noticias" /></div>
+          <div class="dash-card-title">Noticias de salud</div>
+          <div class="dash-card-desc">Últimas investigaciones, alertas epidemiológicas y avances médicos.</div>
+          <div class="dash-card-arrow">Leer noticias →</div>
+        </div>
+        <div class="dash-card" onclick="go('s-comments')">
+          <div class="dash-card-icon" style="background:#F5F3FF;"><img class="icon-img" src="images/icon-comments.svg" alt="Comentarios" /></div>
+          <div class="dash-card-title">Comentarios</div>
+          <div class="dash-card-desc">Comparte tu experiencia con médicos, tratamientos y servicios de salud.</div>
+          <div class="dash-card-arrow">Comentar →</div>
+        </div>
+        <div class="dash-card" onclick="go('s-symptom')">
+          <div class="dash-card-icon" style="background:#ECFDF5;"><img class="icon-img" src="images/icon-symptom.svg" alt="Síntomas" /></div>
+          <div class="dash-card-title">Verificador de síntomas</div>
+          <div class="dash-card-desc">Identifica posibles condiciones según los síntomas que presentas hoy.</div>
+          <div class="dash-card-arrow">Iniciar →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:0;">
+      <div class="section-hdr"><span class="stitle">Artículos recomendados</span><a class="see-all" onclick="go('s-news')">Ver todos →</a></div>
+      <div class="articles-grid">
+        <div class="article-card" onclick="go('s-news')"><div class="article-img" style="background:#FFF0F1;"><img src="images/article-1.jpg" alt="Infarto" /></div><div class="article-body"><div class="article-cat">Cardiología</div><div class="article-title">Señales de alerta de infarto que no debes ignorar</div><div class="article-meta"><i class="ti ti-clock" style="font-size:12px;"></i> 5 min · Dr. Ramírez</div></div></div>
+        <div class="article-card" onclick="go('s-news')"><div class="article-img" style="background:#F0FFF4;"><img src="images/article-2.jpg" alt="Neurología" /></div><div class="article-body"><div class="article-cat">Neurología</div><div class="article-title">Migraña crónica: nuevos tratamientos en 2025</div><div class="article-meta"><i class="ti ti-clock" style="font-size:12px;"></i> 8 min · Dra. Torres</div></div></div>
+        <div class="article-card" onclick="go('s-news')"><div class="article-img" style="background:#EFF6FF;"><img src="images/article-3.jpg" alt="Medicamentos" /></div><div class="article-body"><div class="article-cat">Farmacología</div><div class="article-title">Interacciones peligrosas entre medicamentos comunes</div><div class="article-meta"><i class="ti ti-clock" style="font-size:12px;"></i> 6 min · Dr. Mendoza</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div><div class="footer-logo">Web<span>MD</span></div><p>Información médica confiable, verificada por especialistas. Tu salud, nuestra prioridad.</p></div>
+      <div><h4>Herramientas</h4><ul><li><a onclick="go('s-symptom')">Verificador de síntomas</a></li><li><a onclick="go('s-bmi')">Calculadora IMC</a></li><li><a onclick="go('s-finder')">Buscar médico</a></li><li><a onclick="go('s-ambulance')">Ambulancia</a></li></ul></div>
+      <div><h4>Contenido</h4><ul><li><a onclick="go('s-az')">Salud A-Z</a></li><li><a onclick="go('s-news')">Noticias</a></li><li><a onclick="go('s-insurance')">Seguros</a></li><li><a onclick="go('s-comments')">Comentarios</a></li></ul></div>
+      <div><h4>Cuenta</h4><ul><li><a onclick="go('s-login')">Iniciar sesión</a></li><li><a onclick="go('s-register')">Registro</a></li><li><a onclick="go('s-recover')">Recuperar contraseña</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 WebMD Health Corp.</span><span>Este sitio no reemplaza el consejo médico profesional.</span></div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: LOGIN
+══════════════════════════════════════════════ -->
+<div id="s-login" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">← Volver al inicio</a></li></ul>
+    <div class="nav-right"><button class="btn-ghost" onclick="go('s-register')">¿No tienes cuenta? Regístrate</button></div>
+  </nav>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Web<span>MD</span></div>
+      <div class="auth-title">Bienvenido de vuelta</div>
+      <div class="auth-sub">Inicia sesión para acceder a tu historial de salud</div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input class="form-input" type="email" placeholder="tu@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña <span class="forgot-link" onclick="go('s-recover')">¿Olvidaste tu contraseña?</span></label>
+        <input class="form-input" type="password" placeholder="••••••••" />
+      </div>
+      <label class="form-check" style="margin-bottom:8px;"><input type="checkbox" /> <span>Recordar mi sesión en este dispositivo</span></label>
+      <button class="form-btn" onclick="go('s-dashboard')">Iniciar sesión</button>
+      <div class="auth-divider">— o continúa con —</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="social-btn">🇬 &nbsp; Continuar con Google</button>
+        <button class="social-btn">🍎 &nbsp; Continuar con Apple</button>
+      </div>
+      <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted);">
+        ¿No tienes cuenta? <a class="auth-link" onclick="go('s-register')">Regístrate gratis</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: REGISTER
+══════════════════════════════════════════════ -->
+<div id="s-register" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">← Volver al inicio</a></li></ul>
+    <div class="nav-right"><button class="btn-ghost" onclick="go('s-login')">¿Ya tienes cuenta? Ingresa</button></div>
+  </nav>
+  <div class="auth-wrap" style="padding:32px 40px;">
+    <div class="auth-card" style="max-width:560px;">
+      <div class="auth-logo">Web<span>MD</span></div>
+      <div class="auth-title">Crea tu cuenta</div>
+      <div class="auth-sub">Paso 1 de 2 — Datos personales</div>
+      <div class="steps-bar" style="margin-bottom:28px;">
+        <div class="step-seg step-active"></div>
+        <div class="step-seg step-pending"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" type="text" placeholder="María" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido</label>
+          <input class="form-input" type="text" placeholder="García" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input class="form-input" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sexo biológico</label>
+        <select class="form-select">
+          <option value="">Seleccionar…</option>
+          <option>Femenino</option>
+          <option>Masculino</option>
+          <option>Prefiero no indicar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input class="form-input" type="email" placeholder="tu@email.com" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" type="password" placeholder="Mín. 8 caracteres" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <input class="form-input" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+      <label class="form-check" style="margin-bottom:18px;"><input type="checkbox" /> <span>Acepto los <a class="auth-link">Términos de uso</a> y la <a class="auth-link">Política de privacidad</a></span></label>
+      <button class="form-btn" onclick="go('s-register2')">Continuar — Datos de salud →</button>
+      <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);">¿Ya tienes cuenta? <a class="auth-link" onclick="go('s-login')">Inicia sesión</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: REGISTER STEP 2
+══════════════════════════════════════════════ -->
+<div id="s-register2" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-register')">← Paso anterior</a></li></ul>
+  </nav>
+  <div class="auth-wrap" style="padding:32px 40px;">
+    <div class="auth-card" style="max-width:560px;">
+      <div class="auth-logo">Web<span>MD</span></div>
+      <div class="auth-title">Datos de salud</div>
+      <div class="auth-sub">Paso 2 de 2 — Información médica básica</div>
+      <div class="steps-bar" style="margin-bottom:28px;">
+        <div class="step-seg step-done"></div>
+        <div class="step-seg step-active"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Peso (kg)</label>
+          <input class="form-input" type="number" placeholder="70" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Talla (cm)</label>
+          <input class="form-input" type="number" placeholder="165" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de sangre</label>
+        <select class="form-select">
+          <option value="">Seleccionar…</option>
+          <option>O+</option><option>O−</option><option>A+</option><option>A−</option>
+          <option>B+</option><option>B−</option><option>AB+</option><option>AB−</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">EPS / Aseguradora</label>
+        <input class="form-input" type="text" placeholder="Ej. Sura, Nueva EPS, Sanitas…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alergias conocidas (opcional)</label>
+        <input class="form-input" type="text" placeholder="Ej. Penicilina, maní, látex…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Condiciones crónicas (opcional)</label>
+        <input class="form-input" type="text" placeholder="Ej. Diabetes tipo 2, hipertensión…" />
+      </div>
+      <button class="form-btn" onclick="go('s-reg-success')">Crear mi cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: REGISTER SUCCESS
+══════════════════════════════════════════════ -->
+<div id="s-reg-success" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+  </nav>
+  <div class="auth-wrap">
+    <div class="auth-card" style="text-align:center;">
+      <div class="success-icon">✅</div>
+      <div class="auth-title">¡Cuenta creada exitosamente!</div>
+      <div class="auth-sub" style="margin-bottom:28px;">Bienvenida a WebMD Health. Tu perfil médico está listo. Hemos enviado un correo de confirmación a tu bandeja de entrada.</div>
+      <button class="form-btn" onclick="go('s-dashboard')">Ir a mi dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: RECOVER PASSWORD
+══════════════════════════════════════════════ -->
+<div id="s-recover" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-login')">← Volver a iniciar sesión</a></li></ul>
+  </nav>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="success-icon" style="background:#FFF8E1;font-size:26px;">🔐</div>
+      <div class="auth-title">Recuperar contraseña</div>
+      <div class="auth-sub">Ingresa tu correo registrado y te enviaremos un enlace para restablecer tu contraseña.</div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input class="form-input" type="email" placeholder="tu@email.com" />
+      </div>
+      <button class="form-btn" onclick="go('s-recover2')">Enviar enlace de recuperación</button>
+      <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);">¿Recuerdas tu contraseña? <a class="auth-link" onclick="go('s-login')">Inicia sesión</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- RECOVER STEP 2 (confirmación) -->
+<div id="s-recover2" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+  </nav>
+  <div class="auth-wrap">
+    <div class="auth-card" style="text-align:center;">
+      <div class="success-icon" style="background:#EFF6FF;">📧</div>
+      <div class="auth-title">Revisa tu correo</div>
+      <div class="auth-sub" style="margin-bottom:16px;">Hemos enviado un enlace de recuperación a <strong>tu@email.com</strong>. El enlace expira en 30 minutos.</div>
+      <div style="background:var(--bg);border-radius:var(--r-md);padding:16px;margin-bottom:24px;font-size:13px;color:var(--text-muted);text-align:left;">
+        <p>Si no ves el correo:</p>
+        <ul style="margin-top:8px;padding-left:18px;line-height:2;">
+          <li>Revisa la carpeta de spam o correo no deseado</li>
+          <li>Espera unos minutos e intenta de nuevo</li>
+          <li>Asegúrate de haber usado el correo correcto</li>
+        </ul>
+      </div>
+      <button class="form-btn" style="margin-bottom:12px;" onclick="go('s-recover3')">Simular: restablecer contraseña →</button>
+      <button class="btn-ghost" style="width:100%;padding:11px;" onclick="go('s-login')">Volver a iniciar sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECOVER STEP 3 (nueva contraseña) -->
+<div id="s-recover3" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+  </nav>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="success-icon" style="background:var(--red-light);">🔑</div>
+      <div class="auth-title">Nueva contraseña</div>
+      <div class="auth-sub">Crea una contraseña segura para tu cuenta.</div>
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña</label>
+        <input class="form-input" type="password" placeholder="Mín. 8 caracteres" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar nueva contraseña</label>
+        <input class="form-input" type="password" placeholder="••••••••" />
+      </div>
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted);line-height:1.8;">
+        La contraseña debe tener: mínimo 8 caracteres · una mayúscula · un número · un símbolo especial
+      </div>
+      <button class="form-btn" onclick="go('s-login')">Restablecer contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: DASHBOARD
+══════════════════════════════════════════════ -->
+<div id="s-dashboard" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('s-az')">Salud A-Z</a></li>
+      <li><a onclick="go('s-symptom')">Síntomas</a></li>
+      <li><a onclick="go('s-resources')">Recursos</a></li>
+      <li><a onclick="go('s-news')">Noticias</a></li>
+      <li><a onclick="go('s-insurance')">Seguros</a></li>
+    </ul>
+    <div class="nav-right">
+      <span style="font-size:13px;font-weight:500;color:var(--text-sec);">Hola, María 👋</span>
+      <button class="btn-ghost" onclick="go('s-home')">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <section class="hero" style="padding:36px 40px;">
+    <div class="hero-inner" style="grid-template-columns:1fr;">
+      <div>
+        <div class="hero-badge"><i class="ti ti-user-circle" style="font-size:14px;"></i> Panel personal — María García</div>
+        <h1 style="font-size:30px;">Buenos días, <em>María.</em></h1>
+        <p style="margin-bottom:0;">Tienes 1 recordatorio de medicación activo y 2 citas próximas esta semana.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="alert-banner" style="margin-bottom:0;">
+      <i class="ti ti-pill"></i>
+      <span><strong>Hoy, 8:00 PM:</strong> Metformina 500mg · <strong style="margin-left:12px;">Viernes 24 mayo:</strong> Cita con Dra. Carmen Ríos — Teleconsulta</span>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><span class="stitle">Mis signos vitales</span><span style="font-size:12px;color:var(--text-muted);">Actualizado hoy, 9:41 AM</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Presión arterial</div>
+          <div style="font-size:22px;font-weight:700;color:var(--navy);">118/76</div>
+          <div style="font-size:10px;color:#A8B3CC;">mmHg</div>
+          <div style="font-size:11px;color:#16A34A;font-weight:600;margin-top:6px;">● Normal</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Glucosa</div>
+          <div style="font-size:22px;font-weight:700;color:var(--amber);">108</div>
+          <div style="font-size:10px;color:#A8B3CC;">mg/dL</div>
+          <div style="font-size:11px;color:var(--amber);font-weight:600;margin-top:6px;">● Revisar</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Frec. cardiaca</div>
+          <div style="font-size:22px;font-weight:700;color:var(--navy);">72</div>
+          <div style="font-size:10px;color:#A8B3CC;">bpm</div>
+          <div style="font-size:11px;color:#16A34A;font-weight:600;margin-top:6px;">● Normal</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Saturación O₂</div>
+          <div style="font-size:22px;font-weight:700;color:var(--navy);">98%</div>
+          <div style="font-size:10px;color:#A8B3CC;">SpO₂</div>
+          <div style="font-size:11px;color:#16A34A;font-weight:600;margin-top:6px;">● Normal</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">IMC</div>
+          <div style="font-size:22px;font-weight:700;color:var(--navy);">23.4</div>
+          <div style="font-size:10px;color:#A8B3CC;">kg/m²</div>
+          <div style="font-size:11px;color:#16A34A;font-weight:600;margin-top:6px;">● Normal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:0;">
+      <div class="section-hdr"><span class="stitle">Mi panel de salud</span></div>
+      <div class="dash-grid">
+        <div class="dash-card" onclick="go('s-az')"><div class="dash-card-icon" style="background:#FFF0F1;">📖</div><div class="dash-card-title">Salud de la A a la Z</div><div class="dash-card-desc">Condiciones, síntomas y tratamientos ordenados alfabéticamente.</div><div class="dash-card-arrow">Explorar →</div></div>
+        <div class="dash-card" onclick="go('s-insurance')"><div class="dash-card-icon" style="background:#EFF6FF;">🛡️</div><div class="dash-card-title">Planes de seguro</div><div class="dash-card-desc">Compara coberturas de EPS y medicina prepagada.</div><div class="dash-card-arrow">Ver planes →</div></div>
+        <div class="dash-card" onclick="go('s-resources')"><div class="dash-card-icon" style="background:#F0FFF4;">🧰</div><div class="dash-card-title">Recursos de salud</div><div class="dash-card-desc">Ambulancia, calculadora y búsqueda de médicos.</div><div class="dash-card-arrow">Acceder →</div></div>
+        <div class="dash-card" onclick="go('s-news')"><div class="dash-card-icon" style="background:#FFF8E1;">📰</div><div class="dash-card-title">Noticias</div><div class="dash-card-desc">Últimas investigaciones y alertas de salud.</div><div class="dash-card-arrow">Leer →</div></div>
+        <div class="dash-card" onclick="go('s-comments')"><div class="dash-card-icon" style="background:#F5F3FF;">💬</div><div class="dash-card-title">Comentarios</div><div class="dash-card-desc">Califica médicos y comparte tu experiencia.</div><div class="dash-card-arrow">Comentar →</div></div>
+        <div class="dash-card" onclick="go('s-symptom')"><div class="dash-card-icon" style="background:#ECFDF5;">🩺</div><div class="dash-card-title">Verificador de síntomas</div><div class="dash-card-desc">Identifica posibles condiciones en minutos.</div><div class="dash-card-arrow">Iniciar →</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div><div class="footer-logo">Web<span>MD</span></div><p>Información médica de confianza.</p></div>
+      <div><h4>Herramientas</h4><ul><li><a onclick="go('s-symptom')">Verificador de síntomas</a></li><li><a onclick="go('s-bmi')">Calculadora IMC</a></li><li><a onclick="go('s-finder')">Buscar médico</a></li></ul></div>
+      <div><h4>Recursos</h4><ul><li><a onclick="go('s-az')">Salud A-Z</a></li><li><a onclick="go('s-news')">Noticias</a></li><li><a onclick="go('s-ambulance')">Ambulancia</a></li></ul></div>
+      <div><h4>Cuenta</h4><ul><li><a onclick="go('s-home')">Cerrar sesión</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 WebMD Health Corp.</span><span>Este sitio no reemplaza el consejo médico profesional.</span></div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: SALUD A-Z
+══════════════════════════════════════════════ -->
+<div id="s-az" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-news')">Noticias</a></li><li><a onclick="go('s-resources')">Recursos</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span>Salud de la A a la Z</div>
+      <h2>Salud de la A a la Z</h2>
+      <p>Explora condiciones médicas, síntomas y tratamientos ordenados alfabéticamente</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="az-letters" id="azLetters"></div>
+    <div class="section-hdr"><span class="stitle">Mostrando: A</span></div>
+    <div class="az-grid">
+      <div class="az-item"><div class="az-item-title">Asma</div><div class="az-item-cat">Respiratorio · Crónico</div></div>
+      <div class="az-item"><div class="az-item-title">Artritis reumatoide</div><div class="az-item-cat">Musculoesquelético · Autoinmune</div></div>
+      <div class="az-item"><div class="az-item-title">Ansiedad generalizada</div><div class="az-item-cat">Salud mental · Crónico</div></div>
+      <div class="az-item"><div class="az-item-title">Anemia ferropénica</div><div class="az-item-cat">Hematológico · Tratable</div></div>
+      <div class="az-item"><div class="az-item-title">Apendicitis</div><div class="az-item-cat">Gastrointestinal · Urgente</div></div>
+      <div class="az-item"><div class="az-item-title">Alzheimer</div><div class="az-item-cat">Neurológico · Crónico</div></div>
+      <div class="az-item"><div class="az-item-title">Arritmia cardiaca</div><div class="az-item-cat">Cardiológico · Variable</div></div>
+      <div class="az-item"><div class="az-item-title">Alergia estacional</div><div class="az-item-cat">Inmunológico · Periódico</div></div>
+      <div class="az-item"><div class="az-item-title">Accidente cerebrovascular</div><div class="az-item-cat">Neurológico · Urgente</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: INSURANCE
+══════════════════════════════════════════════ -->
+<div id="s-insurance" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-az')">Salud A-Z</a></li><li><a onclick="go('s-news')">Noticias</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span>Planes de seguro</div>
+      <h2>Planes de seguro médico</h2>
+      <p>Compara coberturas de EPS, medicina prepagada y planes complementarios en Colombia</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="ins-grid">
+      <div class="ins-card"><div class="ins-icon">🏥</div><div class="ins-name">EPS Contributivo</div><div class="ins-desc">Plan obligatorio para trabajadores dependientes e independientes. Cubre consultas, hospitalizaciones, medicamentos y cirugías según el PBS.</div><div><span class="ins-tag">Obligatorio</span></div></div>
+      <div class="ins-card" style="border-color:var(--red);"><div class="ins-icon">⭐</div><div class="ins-name">Medicina Prepagada</div><div class="ins-desc">Acceso prioritario a especialistas, habitaciones individuales y cobertura de procedimientos de alta complejidad sin largas esperas.</div><div><span class="ins-tag">Recomendado</span></div></div>
+      <div class="ins-card"><div class="ins-icon">➕</div><div class="ins-name">Plan Complementario</div><div class="ins-desc">Complementa tu EPS con cobertura de copagos, medicamentos de alto costo y atención odontológica avanzada.</div><div><span class="ins-tag">Complementario</span></div></div>
+      <div class="ins-card"><div class="ins-icon">👴</div><div class="ins-name">SISBEN / Subsidiado</div><div class="ins-desc">Para población vulnerable. Cobertura básica a través del régimen subsidiado con acceso a la red pública de salud.</div><div><span class="ins-tag">Subsidiado</span></div></div>
+      <div class="ins-card"><div class="ins-icon">✈️</div><div class="ins-name">Seguro de Viaje</div><div class="ins-desc">Cobertura de emergencias médicas en el exterior, evacuación médica y repatriación. Ideal para viajes internacionales.</div><div><span class="ins-tag">Opcional</span></div></div>
+      <div class="ins-card"><div class="ins-icon">😁</div><div class="ins-name">Plan Dental</div><div class="ins-desc">Cubre limpieza, ortodoncia, implantes y procedimientos estéticos dentales que no incluye tu EPS habitual.</div><div><span class="ins-tag">Especializado</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: RESOURCES
+══════════════════════════════════════════════ -->
+<div id="s-resources" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-news')">Noticias</a></li><li><a onclick="go('s-az')">Salud A-Z</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span>Recursos de salud</div>
+      <h2>Recursos de salud</h2>
+      <p>Herramientas y servicios para cuidar tu bienestar</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="res-grid">
+      <div class="res-card" onclick="go('s-ambulance')"><div class="res-icon" style="background:#FFF0F1;">🚑</div><div class="res-title">Ambulancia</div><div class="res-desc">Solicita asistencia de emergencia y consulta líneas de urgencias disponibles en tu ciudad.</div></div>
+      <div class="res-card" onclick="go('s-bmi')"><div class="res-icon" style="background:#EFF6FF;">⚖️</div><div class="res-title">Calculadora de salud</div><div class="res-desc">Calcula tu IMC, riesgo cardiovascular, ciclo menstrual, consumo calórico y más.</div></div>
+      <div class="res-card" onclick="go('s-finder')"><div class="res-icon" style="background:#F0FFF4;">🔍</div><div class="res-title">Búsqueda de médicos</div><div class="res-desc">Encuentra especialistas cerca de tu ubicación, con disponibilidad y calificaciones verificadas.</div></div>
+      <div class="res-card" onclick="go('s-symptom')"><div class="res-icon" style="background:#F5F3FF;">🩺</div><div class="res-title">Verificador de síntomas</div><div class="res-desc">Responde preguntas guiadas para identificar posibles condiciones y saber si necesitas atención médica.</div></div>
+      <div class="res-card"><div class="res-icon" style="background:#FFF8E1;">💊</div><div class="res-title">Interacciones medicamentos</div><div class="res-desc">Verifica si dos o más medicamentos pueden interactuar de forma peligrosa antes de tomarlos.</div></div>
+      <div class="res-card"><div class="res-icon" style="background:#ECFDF5;">📋</div><div class="res-title">Directorio de hospitales</div><div class="res-desc">Encuentra hospitales y clínicas por ciudad, nivel de complejidad y especialidades disponibles.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: AMBULANCE
+══════════════════════════════════════════════ -->
+<div id="s-ambulance" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-resources')">← Recursos</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero" style="background:#8B0000;">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span><a onclick="go('s-resources')">Recursos</a><span>›</span>Ambulancia</div>
+      <h2>🚑 Servicios de Ambulancia</h2>
+      <p>Líneas de emergencia y asistencia médica disponibles las 24 horas</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="amb-alert">
+      <div class="amb-icon">🚨</div>
+      <div>
+        <div class="amb-title">¿Es una emergencia médica?</div>
+        <div class="amb-sub">Llama inmediatamente a la línea de emergencias</div>
+        <div class="amb-num">📞 123 — Línea Nacional de Emergencias</div>
+      </div>
+      <button class="amb-btn">Llamar ahora</button>
+    </div>
+    <div class="section-hdr" style="margin-bottom:16px;"><span class="stitle">Líneas de emergencia por ciudad</span></div>
+    <div class="amb-grid" style="margin-bottom:28px;">
+      <div class="amb-card"><div class="amb-card-title">🏙️ Bogotá<span style="background:var(--red-light);color:var(--red);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Disponible 24/7</span></div><div class="amb-card-desc">Línea 123 · CRUE Bogotá: 3165000 · Cruz Roja: 132</div></div>
+      <div class="amb-card"><div class="amb-card-title">🌆 Medellín<span style="background:var(--red-light);color:var(--red);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Disponible 24/7</span></div><div class="amb-card-desc">Línea 123 · Metrosalud: 4442626 · Defensa Civil: 144</div></div>
+      <div class="amb-card"><div class="amb-card-title">🌇 Cali<span style="background:var(--red-light);color:var(--red);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Disponible 24/7</span></div><div class="amb-card-desc">Línea 123 · Salud Cali: 8861150 · Bomberos: 119</div></div>
+      <div class="amb-card"><div class="amb-card-title">🏔️ Popayán<span style="background:var(--red-light);color:var(--red);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Disponible 24/7</span></div><div class="amb-card-desc">Línea 123 · Hospital San José: 8235900 · Cruz Roja Cauca: 8237340</div></div>
+      <div class="amb-card"><div class="amb-card-title">🌴 Barranquilla<span style="background:var(--red-light);color:var(--red);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Disponible 24/7</span></div><div class="amb-card-desc">Línea 123 · Dist. Salud: 3800999 · CRUE: 3882001</div></div>
+      <div class="amb-card"><div class="amb-card-title">⛵ Cartagena<span style="background:var(--red-light);color:var(--red);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Disponible 24/7</span></div><div class="amb-card-desc">Línea 123 · Secretaría Salud: 6554747 · Defensa Civil: 144</div></div>
+    </div>
+    <div class="section-hdr" style="margin-bottom:16px;"><span class="stitle">¿Qué hacer en una emergencia?</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;"><div style="font-size:28px;margin-bottom:10px;">📞</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">1. Llama al 123</div><div style="font-size:12px;color:var(--text-muted);">Informa tu ubicación exacta y el tipo de emergencia</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;"><div style="font-size:28px;margin-bottom:10px;">🧘</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">2. Mantén la calma</div><div style="font-size:12px;color:var(--text-muted);">Tranquiliza al paciente y sigue las instrucciones del operador</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;"><div style="font-size:28px;margin-bottom:10px;">🩺</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">3. Primeros auxilios</div><div style="font-size:12px;color:var(--text-muted);">Aplica primeros auxilios básicos si estás capacitado</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;text-align:center;"><div style="font-size:28px;margin-bottom:10px;">📍</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">4. Guía la llegada</div><div style="font-size:12px;color:var(--text-muted);">Espera en un lugar visible y guía a la ambulancia</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: NEWS
+══════════════════════════════════════════════ -->
+<div id="s-news" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a class="active">Noticias</a></li><li><a onclick="go('s-az')">Salud A-Z</a></li><li><a onclick="go('s-resources')">Recursos</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span>Noticias de salud</div>
+      <h2>📰 Noticias de salud</h2>
+      <p>Últimas investigaciones, alertas epidemiológicas y avances médicos verificados</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
+      <button class="zone-btn active" style="padding:6px 14px;">Todo</button>
+      <button class="zone-btn" style="padding:6px 14px;">Cardiología</button>
+      <button class="zone-btn" style="padding:6px 14px;">Oncología</button>
+      <button class="zone-btn" style="padding:6px 14px;">Salud mental</button>
+      <button class="zone-btn" style="padding:6px 14px;">Nutrición</button>
+      <button class="zone-btn" style="padding:6px 14px;">Tecnología médica</button>
+      <button class="zone-btn" style="padding:6px 14px;">Epidemiología</button>
+    </div>
+    <div class="news-grid">
+      <div class="news-main">
+        <div class="news-featured">
+          <div class="news-feat-img" style="background:#FFF0F1;">❤️‍🔥</div>
+          <div class="news-feat-body">
+            <div class="news-feat-tag">Cardiología · Investigación</div>
+            <div class="news-feat-title">Nuevo estudio revela que el ejercicio moderado reduce un 35% el riesgo de infarto en mayores de 50 años</div>
+            <div class="news-feat-excerpt">Investigadores del Instituto Nacional de Cardiología publicaron esta semana los resultados de un estudio de 10 años que analizó los hábitos de 40.000 personas. La conclusión principal señala que 30 minutos diarios de caminata…</div>
+            <div class="news-feat-meta"><i class="ti ti-calendar" style="font-size:13px;"></i> 22 mayo 2025 · <i class="ti ti-clock" style="font-size:13px;"></i> 6 min de lectura · Dr. Álvaro Pérez</div>
+          </div>
+        </div>
+        <div class="news-item"><div class="news-item-emoji">🧠</div><div><div class="news-item-cat">Neurología</div><div class="news-item-title">FDA aprueba nuevo medicamento para el tratamiento de Alzheimer temprano</div><div class="news-item-meta">20 mayo 2025 · 4 min de lectura</div></div></div>
+        <div class="news-item"><div class="news-item-emoji">💉</div><div><div class="news-item-cat">Vacunas</div><div class="news-item-title">Colombia inicia campaña de vacunación contra el dengue en 12 departamentos</div><div class="news-item-meta">19 mayo 2025 · 3 min de lectura</div></div></div>
+        <div class="news-item"><div class="news-item-emoji">🔬</div><div><div class="news-item-cat">Oncología</div><div class="news-item-title">Terapia con células CAR-T muestra resultados prometedores en linfoma refractario</div><div class="news-item-meta">18 mayo 2025 · 8 min de lectura</div></div></div>
+        <div class="news-item"><div class="news-item-emoji">🥦</div><div><div class="news-item-cat">Nutrición</div><div class="news-item-title">Dieta mediterránea reduce en un 28% la incidencia de diabetes tipo 2, según meta-análisis</div><div class="news-item-meta">17 mayo 2025 · 5 min de lectura</div></div></div>
+      </div>
+      <div class="news-sidebar">
+        <div class="news-sidebar-hdr">🔥 Tendencias</div>
+        <div class="trending-item"><div class="trending-num">01</div><div class="trending-title">Inteligencia artificial en el diagnóstico médico: ¿cómo funciona?</div><div class="trending-cat">Tecnología médica</div></div>
+        <div class="trending-item"><div class="trending-num">02</div><div class="trending-title">Todo lo que debes saber sobre la nueva variante del virus respiratorio</div><div class="trending-cat">Epidemiología</div></div>
+        <div class="trending-item"><div class="trending-num">03</div><div class="trending-title">¿Es efectivo ayunar 16 horas? La ciencia responde</div><div class="trending-cat">Nutrición</div></div>
+        <div class="trending-item"><div class="trending-num">04</div><div class="trending-title">Salud mental en el trabajo: el síndrome de burnout en cifras 2025</div><div class="trending-cat">Salud mental</div></div>
+        <div class="trending-item"><div class="trending-num">05</div><div class="trending-title">Los mejores y peores hábitos del sueño según la neurociencia</div><div class="trending-cat">Neurología</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: COMMENTS
+══════════════════════════════════════════════ -->
+<div id="s-comments" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-finder')">Médicos</a></li><li><a onclick="go('s-news')">Noticias</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span>Comentarios</div>
+      <h2>💬 Comentarios y reseñas</h2>
+      <p>Comparte tu experiencia con médicos, tratamientos y servicios de salud</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;">
+      <div>
+        <div class="comment-form">
+          <div class="comment-form-title">Escribe tu comentario</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+            <span class="comment-tag active">Médico</span>
+            <span class="comment-tag">Tratamiento</span>
+            <span class="comment-tag">Hospital</span>
+            <span class="comment-tag">EPS</span>
+            <span class="comment-tag">Medicamento</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">¿Sobre qué médico o servicio comentas?</label>
+            <input class="form-input" type="text" placeholder="Ej. Dra. Carmen Ríos, Hospital San José…" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tu calificación</label>
+            <div class="star-rating" id="starRating">
+              <span class="star filled" onclick="setStars(1)">★</span>
+              <span class="star filled" onclick="setStars(2)">★</span>
+              <span class="star filled" onclick="setStars(3)">★</span>
+              <span class="star filled" onclick="setStars(4)">★</span>
+              <span class="star" onclick="setStars(5)">★</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tu comentario</label>
+            <textarea class="form-textarea" placeholder="Describe tu experiencia con este médico o servicio de salud…"></textarea>
+          </div>
+          <button class="form-btn" style="width:auto;padding:10px 28px;">Publicar comentario</button>
+        </div>
+
+        <div class="comments-list">
+          <div class="comment-card">
+            <div class="comment-hdr">
+              <div class="comment-av" style="background:#FFF0F1;color:var(--red);">MG</div>
+              <div><div class="comment-name">María García</div><div class="comment-date">15 mayo 2025 · <span class="comment-stars">★★★★★</span></div></div>
+              <div style="margin-left:auto;"><span class="comment-tag">Médico</span></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;">Dra. Carmen Ríos — Medicina interna</div>
+            <div class="comment-text">Excelente atención. La doctora fue muy detallada en la explicación del diagnóstico, me dedicó todo el tiempo necesario y resolvió todas mis dudas. El sistema de teleconsulta funcionó perfectamente. La recomiendo ampliamente.</div>
+            <div class="comment-actions"><button class="comment-action"><i class="ti ti-thumb-up" style="font-size:14px;"></i> Útil (23)</button><button class="comment-action"><i class="ti ti-message" style="font-size:14px;"></i> Responder</button></div>
+          </div>
+          <div class="comment-card">
+            <div class="comment-hdr">
+              <div class="comment-av" style="background:#EFF6FF;color:#1D4ED8;">JP</div>
+              <div><div class="comment-name">Juan Pablo Restrepo</div><div class="comment-date">10 mayo 2025 · <span class="comment-stars">★★★★</span>☆</div></div>
+              <div style="margin-left:auto;"><span class="comment-tag">Hospital</span></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;">Hospital Universitario San Ignacio — Urgencias</div>
+            <div class="comment-text">La atención médica fue muy buena, los especialistas son excelentes. El único punto negativo fue el tiempo de espera en urgencias, que fue de aproximadamente 3 horas. El personal de enfermería fue muy amable y atento.</div>
+            <div class="comment-actions"><button class="comment-action"><i class="ti ti-thumb-up" style="font-size:14px;"></i> Útil (14)</button><button class="comment-action"><i class="ti ti-message" style="font-size:14px;"></i> Responder</button></div>
+          </div>
+          <div class="comment-card">
+            <div class="comment-hdr">
+              <div class="comment-av" style="background:#F0FFF4;color:#166534;">LC</div>
+              <div><div class="comment-name">Luisa Cardona</div><div class="comment-date">8 mayo 2025 · <span class="comment-stars">★★★★★</span></div></div>
+              <div style="margin-left:auto;"><span class="comment-tag">Tratamiento</span></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px;">Tratamiento insulina — Diabetes tipo 1</div>
+            <div class="comment-text">Después de 3 años con el tratamiento de insulina, puedo decir que ha mejorado significativamente mi calidad de vida. El Dr. Salas me explicó todo el proceso con mucha paciencia y el seguimiento ha sido constante y personalizado.</div>
+            <div class="comment-actions"><button class="comment-action"><i class="ti ti-thumb-up" style="font-size:14px;"></i> Útil (31)</button><button class="comment-action"><i class="ti ti-message" style="font-size:14px;"></i> Responder</button></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:600;margin-bottom:14px;">Resumen de calificaciones</div>
+          <div style="font-size:40px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:4px;">4.7</div>
+          <div style="text-align:center;color:#F59E0B;font-size:20px;margin-bottom:4px;">★★★★★</div>
+          <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:16px;">Basado en 1,284 reseñas</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:12px;text-align:right;">5</span><span style="color:#F59E0B;">★</span><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:70%;height:100%;background:#F59E0B;border-radius:3px;"></div></div><span style="color:var(--text-muted);">70%</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:12px;text-align:right;">4</span><span style="color:#F59E0B;">★</span><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:20%;height:100%;background:#F59E0B;border-radius:3px;"></div></div><span style="color:var(--text-muted);">20%</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:12px;text-align:right;">3</span><span style="color:#F59E0B;">★</span><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:7%;height:100%;background:#F59E0B;border-radius:3px;"></div></div><span style="color:var(--text-muted);">7%</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:12px;text-align:right;">2</span><span style="color:#F59E0B;">★</span><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:2%;height:100%;background:#FBB040;border-radius:3px;"></div></div><span style="color:var(--text-muted);">2%</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span style="width:12px;text-align:right;">1</span><span style="color:#F59E0B;">★</span><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="width:1%;height:100%;background:#F87171;border-radius:3px;"></div></div><span style="color:var(--text-muted);">1%</span></div>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:12px;">Filtrar por categoría</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="radio" name="cat" checked style="accent-color:var(--red);"> Todos (1,284)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="radio" name="cat" style="accent-color:var(--red);"> Médicos (643)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="radio" name="cat" style="accent-color:var(--red);"> Hospitales (287)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="radio" name="cat" style="accent-color:var(--red);"> Tratamientos (214)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="radio" name="cat" style="accent-color:var(--red);"> EPS y seguros (140)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: SYMPTOM CHECKER
+══════════════════════════════════════════════ -->
+<div id="s-symptom" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-resources')">Recursos</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span>Verificador de síntomas</div>
+      <h2>🩺 Verificador de síntomas</h2>
+      <p>Selecciona la zona del cuerpo y los síntomas que presentas</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="symptom-checker">
+      <div class="sc-hdr"><div class="sc-icon">🩺</div><div><div class="sc-title">¿Cómo te sientes hoy?</div><div class="sc-sub">Selecciona la zona del cuerpo afectada para ver los síntomas relacionados. Puedes seleccionar varios.</div></div></div>
+      <div class="body-zones">
+        <button class="zone-btn active" onclick="selectZone(this,'cabeza')">Cabeza</button>
+        <button class="zone-btn" onclick="selectZone(this,'pecho')">Pecho</button>
+        <button class="zone-btn" onclick="selectZone(this,'abdomen')">Abdomen</button>
+        <button class="zone-btn" onclick="selectZone(this,'espalda')">Espalda</button>
+        <button class="zone-btn" onclick="selectZone(this,'extremidades')">Extremidades</button>
+        <button class="zone-btn" onclick="selectZone(this,'piel')">Piel</button>
+      </div>
+      <div class="symptoms-grid" id="symptomsGrid">
+        <button class="schip selected" onclick="toggleChip(this)">Dolor de cabeza</button>
+        <button class="schip" onclick="toggleChip(this)">Mareos</button>
+        <button class="schip" onclick="toggleChip(this)">Visión borrosa</button>
+        <button class="schip" onclick="toggleChip(this)">Náuseas</button>
+        <button class="schip" onclick="toggleChip(this)">Fiebre</button>
+        <button class="schip" onclick="toggleChip(this)">Fatiga extrema</button>
+        <button class="schip" onclick="toggleChip(this)">Pérdida de apetito</button>
+        <button class="schip" onclick="toggleChip(this)">Dificultad para dormir</button>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="form-label" style="margin-bottom:8px;">¿Hace cuánto tienes estos síntomas?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="zone-btn active" style="padding:6px 14px;font-size:12px;">Hoy</button>
+          <button class="zone-btn" style="padding:6px 14px;font-size:12px;">2-3 días</button>
+          <button class="zone-btn" style="padding:6px 14px;font-size:12px;">1 semana</button>
+          <button class="zone-btn" style="padding:6px 14px;font-size:12px;">Más de 1 semana</button>
+        </div>
+      </div>
+      <button class="sc-cta"><i class="ti ti-stethoscope" style="font-size:18px;"></i> Analizar síntomas</button>
+      <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:14px;line-height:1.6;">⚠️ Esta herramienta es orientativa y no reemplaza la consulta médica. Si tienes una emergencia, llama al 123.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: DOCTOR FINDER
+══════════════════════════════════════════════ -->
+<div id="s-finder" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-resources')">← Recursos</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span><a onclick="go('s-resources')">Recursos</a><span>›</span>Búsqueda de médicos</div>
+      <h2>🔍 Búsqueda de médicos por ubicación</h2>
+      <p>Encuentra especialistas verificados cerca de ti</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="finder-filters">
+      <div class="form-group" style="margin:0;"><label class="form-label">Ciudad o municipio</label><input class="form-input" type="text" placeholder="Ej. Bogotá, Popayán…" value="Popayán" /></div>
+      <div class="form-group" style="margin:0;"><label class="form-label">Especialidad</label><select class="form-select"><option>Todas las especialidades</option><option>Medicina interna</option><option>Cardiología</option><option>Neurología</option><option>Endocrinología</option><option>Pediatría</option></select></div>
+      <div class="form-group" style="margin:0;"><label class="form-label">Disponibilidad</label><select class="form-select"><option>Cualquier momento</option><option>Hoy disponible</option><option>Esta semana</option><option>Teleconsulta</option></select></div>
+      <button class="btn-solid" style="padding:11px 24px;align-self:end;">Buscar</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <span style="font-size:13px;color:var(--text-muted);">Mostrando <strong style="color:var(--navy);">12 médicos</strong> disponibles en Popayán</span>
+      <select class="form-select" style="width:auto;font-size:13px;padding:7px 12px;">
+        <option>Ordenar: Mejor calificados</option>
+        <option>Ordenar: Más cercanos</option>
+        <option>Ordenar: Precio</option>
+      </select>
+    </div>
+    <div class="finder-results">
+      <div class="finder-doc">
+        <div class="finder-av" style="background:#FFF0F1;color:var(--red);">CR</div>
+        <div style="flex:1;">
+          <div class="finder-name">Dra. Carmen Ríos Molano</div>
+          <div class="finder-spec">Medicina interna · Clínica La Estancia, Popayán</div>
+          <div class="finder-tags"><span class="ftag">Teleconsulta</span><span class="ftag">Presencial</span><span class="ftag">Inglés</span></div>
+          <div class="finder-meta"><span class="stars">★★★★★</span> 4.9 (312 reseñas) · <span style="color:var(--green);font-weight:500;">● Disponible hoy</span> · COP 45.000</div>
+        </div>
+        <button class="btn-solid finder-btn">Agendar cita</button>
+      </div>
+      <div class="finder-doc">
+        <div class="finder-av" style="background:#F0FFF4;color:#166534;">FS</div>
+        <div style="flex:1;">
+          <div class="finder-name">Dr. Felipe Salas Quintero</div>
+          <div class="finder-spec">Neurología · Hospital Universitario San José, Popayán</div>
+          <div class="finder-tags"><span class="ftag">Presencial</span><span class="ftag">Urgencias</span></div>
+          <div class="finder-meta"><span class="stars">★★★★★</span> 5.0 (89 reseñas) · <span style="color:var(--green);font-weight:500;">● Disponible hoy</span> · COP 72.000</div>
+        </div>
+        <button class="btn-solid finder-btn">Agendar cita</button>
+      </div>
+      <div class="finder-doc">
+        <div class="finder-av" style="background:#FFF8E1;color:#92400E;">AP</div>
+        <div style="flex:1;">
+          <div class="finder-name">Dra. Ana Lucía Parra</div>
+          <div class="finder-spec">Pediatría · Centro Médico Imbanaco Cauca, Popayán</div>
+          <div class="finder-tags"><span class="ftag">Teleconsulta</span><span class="ftag">Niños</span><span class="ftag">Neonatos</span></div>
+          <div class="finder-meta"><span class="stars">★★★★</span>☆ 4.8 (201 reseñas) · <span style="color:var(--amber);font-weight:500;">● Cita mañana</span> · COP 55.000</div>
+        </div>
+        <button class="btn-outline finder-btn">Ver disponibilidad</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN: BMI CALCULATOR
+══════════════════════════════════════════════ -->
+<div id="s-bmi" class="screen">
+  <nav class="nav">
+    <a class="logo" onclick="go('s-home')">Web<span>MD</span><span class="logo-badge">HEALTH</span></a>
+    <ul class="nav-links"><li><a onclick="go('s-home')">Inicio</a></li><li><a onclick="go('s-resources')">← Recursos</a></li></ul>
+    <div class="nav-right"><button class="btn-outline" onclick="go('s-login')">Mi cuenta</button></div>
+  </nav>
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="breadcrumb"><a onclick="go('s-home')">Inicio</a><span>›</span><a onclick="go('s-resources')">Recursos</a><span>›</span>Calculadora de salud</div>
+      <h2>⚖️ Calculadora de salud</h2>
+      <p>Herramientas de evaluación para monitorear tu bienestar</p>
+    </div>
+  </div>
+  <div class="page-content" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+    <div>
+      <div style="display:flex;gap:8px;margin-bottom:24px;">
+        <button class="zone-btn active" style="padding:8px 18px;">IMC</button>
+        <button class="zone-btn" style="padding:8px 18px;">Calorías</button>
+        <button class="zone-btn" style="padding:8px 18px;">Ritmo cardiaco</button>
+      </div>
+      <div class="calc-card">
+        <div style="font-size:17px;font-weight:600;margin-bottom:20px;">Índice de Masa Corporal (IMC)</div>
+        <div class="form-group">
+          <label class="form-label">Peso (kg)</label>
+          <input class="form-input" type="number" id="bmiWeight" placeholder="70" oninput="calcBMI()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Talla (cm)</label>
+          <input class="form-input" type="number" id="bmiHeight" placeholder="165" oninput="calcBMI()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Edad</label>
+          <input class="form-input" type="number" id="bmiAge" placeholder="32" oninput="calcBMI()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sexo</label>
+          <select class="form-select" onchange="calcBMI()"><option>Femenino</option><option>Masculino</option></select>
+        </div>
+        <button class="form-btn" onclick="calcBMI()">Calcular IMC</button>
+        <div class="calc-result" id="bmiResult">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Tu IMC</div>
+          <div class="calc-bmi" id="bmiVal">—</div>
+          <div class="calc-cat" id="bmiCat">Ingresa tu peso y talla</div>
+          <div class="calc-bar" style="margin-top:16px;">
+            <div class="calc-indicator" id="bmiIndicator" style="left:0%;"></div>
+          </div>
+          <div class="range-labels"><span>Bajo peso<br>&lt;18.5</span><span>Normal<br>18.5–24.9</span><span>Sobrepeso<br>25–29.9</span><span>Obesidad<br>≥30</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:16px;">
+        <div style="font-size:15px;font-weight:600;margin-bottom:14px;">¿Qué significa tu IMC?</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#EFF6FF;border-radius:var(--r-sm);"><span style="font-size:16px;">🟦</span><div><div style="font-size:13px;font-weight:600;color:#1D4ED8;">Bajo peso — IMC &lt; 18.5</div><div style="font-size:12px;color:#6B7A99;">Puede indicar desnutrición. Consulta con tu médico.</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#F0FFF4;border-radius:var(--r-sm);"><span style="font-size:16px;">🟩</span><div><div style="font-size:13px;font-weight:600;color:#166534;">Normal — IMC 18.5 a 24.9</div><div style="font-size:12px;color:#6B7A99;">Rango saludable. Mantén hábitos activos y dieta equilibrada.</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#FFF8E1;border-radius:var(--r-sm);"><span style="font-size:16px;">🟨</span><div><div style="font-size:13px;font-weight:600;color:#92400E;">Sobrepeso — IMC 25 a 29.9</div><div style="font-size:12px;color:#6B7A99;">Mayor riesgo cardiovascular. Consulta con un nutricionista.</div></div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#FFF0F1;border-radius:var(--r-sm);"><span style="font-size:16px;">🟥</span><div><div style="font-size:13px;font-weight:600;color:var(--red);">Obesidad — IMC ≥ 30</div><div style="font-size:12px;color:#6B7A99;">Riesgo alto. Busca atención médica especializada.</div></div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;">Otras calculadoras</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;" onmouseenter="this.style.borderColor='var(--red)'" onmouseleave="this.style.borderColor='var(--border)'"><span style="font-size:20px;">🔥</span><div style="flex:1;"><div style="font-size:13px;font-weight:600;">Calculadora de calorías</div><div style="font-size:11px;color:var(--text-muted);">Calcula tu gasto calórico diario</div></div><i class="ti ti-arrow-right" style="color:var(--red);font-size:16px;"></i></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;" onmouseenter="this.style.borderColor='var(--red)'" onmouseleave="this.style.borderColor='var(--border)'"><span style="font-size:20px;">❤️</span><div style="flex:1;"><div style="font-size:13px;font-weight:600;">Ritmo cardiaco ideal</div><div style="font-size:11px;color:var(--text-muted);">Zonas de frecuencia para ejercicio</div></div><i class="ti ti-arrow-right" style="color:var(--red);font-size:16px;"></i></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;" onmouseenter="this.style.borderColor='var(--red)'" onmouseleave="this.style.borderColor='var(--border)'"><span style="font-size:20px;">💧</span><div style="flex:1;"><div style="font-size:13px;font-weight:600;">Hidratación diaria</div><div style="font-size:11px;color:var(--text-muted);">Cuánta agua necesitas según tu peso</div></div><i class="ti ti-arrow-right" style="color:var(--red);font-size:16px;"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── NAVIGATION ──
+function go(screenId){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  var el=document.getElementById(screenId);
+  if(el){el.classList.add('active');}
+  window.scrollTo(0,0);
+}
+
+// ── AZ LETTERS ──
+(function(){
+  var letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  var c=document.getElementById('azLetters');
+  if(!c)return;
+  letters.forEach(function(l,i){
+    var b=document.createElement('button');
+    b.className='az-letter'+(i===0?' active':'');
+    b.textContent=l;
+    b.onclick=function(){
+      document.querySelectorAll('.az-letter').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active');
+    };
+    c.appendChild(b);
+  });
+})();
+
+// ── SYMPTOM CHECKER ──
+var zoneMap={
+  cabeza:['Dolor de cabeza','Mareos','Visión borrosa','Náuseas','Fiebre','Fatiga extrema','Pérdida de apetito','Dificultad para dormir'],
+  pecho:['Dolor en el pecho','Dificultad al respirar','Palpitaciones','Tos seca','Fatiga extrema','Opresión torácica','Silbidos al respirar'],
+  abdomen:['Dolor abdominal','Náuseas','Vómitos','Diarrea','Estreñimiento','Distensión','Acidez gástrica'],
+  espalda:['Dolor lumbar','Rigidez muscular','Entumecimiento','Ciática','Espasmos musculares','Dolor al mover'],
+  extremidades:['Dolor articular','Inflamación','Entumecimiento','Calambres','Debilidad muscular','Hormigueo'],
+  piel:['Sarpullido','Picazón intensa','Enrojecimiento','Manchas','Urticaria','Descamación','Ampollas']
+};
+function selectZone(btn,zone){
+  document.querySelectorAll('.zone-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var g=document.getElementById('symptomsGrid');
+  if(!g)return;
+  g.innerHTML=(zoneMap[zone]||[]).map(function(s,i){
+    return '<button class="schip'+(i===0?' selected':'')+'" onclick="toggleChip(this)">'+s+'</button>';
+  }).join('');
+}
+function toggleChip(btn){btn.classList.toggle('selected');}
+
+// ── BMI CALC ──
+function calcBMI(){
+  var w=parseFloat(document.getElementById('bmiWeight').value);
+  var h=parseFloat(document.getElementById('bmiHeight').value)/100;
+  var val=document.getElementById('bmiVal');
+  var cat=document.getElementById('bmiCat');
+  var ind=document.getElementById('bmiIndicator');
+  if(!w||!h||h===0){val.textContent='—';cat.textContent='Ingresa tu peso y talla';ind.style.left='0%';return;}
+  var bmi=w/(h*h);
+  val.textContent=bmi.toFixed(1);
+  var pct,label,col;
+  if(bmi<18.5){pct=Math.max(2,(bmi/18.5)*25);label='Bajo peso';col='#60A5FA';}
+  else if(bmi<25){pct=25+((bmi-18.5)/(25-18.5))*25;label='Peso normal';col='#4ADE80';}
+  else if(bmi<30){pct=50+((bmi-25)/5)*25;label='Sobrepeso';col='#FBB040';}
+  else{pct=Math.min(97,75+((bmi-30)/10)*22);label='Obesidad';col='#F87171';}
+  cat.textContent=label;
+  val.style.color=col;
+  ind.style.left=Math.min(96,pct)+'%';
+}
+
+// ── STARS ──
+function setStars(n){
+  document.querySelectorAll('.star').forEach(function(s,i){
+    s.classList.toggle('filled',i<n);
+  });
+}
+</script>
+</body>
+</html>
+HTMLEOF
+echo "Done"
